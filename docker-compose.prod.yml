@@ -28,6 +28,11 @@ services:
       - redis_data:/data
     networks:
       - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   insightface:
     build:
