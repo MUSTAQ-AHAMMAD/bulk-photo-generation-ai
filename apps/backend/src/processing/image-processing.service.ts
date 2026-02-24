@@ -47,7 +47,6 @@ export class ImageProcessingService {
 
     if (options.format === 'webp') {
       pipeline = pipeline.webp({
-        quality: 100,
         lossless: true,
         effort: 6,
       });

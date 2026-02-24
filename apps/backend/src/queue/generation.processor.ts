@@ -32,6 +32,7 @@ const MAX_RETRIES = 3;
 @Processor('generation')
 export class GenerationProcessor {
   private readonly logger = new Logger(GenerationProcessor.name);
+  private readonly maxRetries: number;
 
   constructor(
     private prisma: PrismaService,
@@ -40,7 +41,9 @@ export class GenerationProcessor {
     private imageProcessing: ImageProcessingService,
     private storage: StorageService,
     private config: ConfigService,
-  ) {}
+  ) {
+    this.maxRetries = parseInt(config.get<string>('GENERATION_MAX_RETRIES', String(MAX_RETRIES)), 10);
+  }
 
   @OnQueueActive()
   onActive(job: Job) {
@@ -79,7 +82,7 @@ export class GenerationProcessor {
       let finalSimilarityScore: number | null = null;
       let finalSsimScore: number | null = null;
 
-      while (attemptCount < MAX_RETRIES) {
+      while (attemptCount < this.maxRetries) {
         attemptCount++;
 
         const result = await engine.generateImage({

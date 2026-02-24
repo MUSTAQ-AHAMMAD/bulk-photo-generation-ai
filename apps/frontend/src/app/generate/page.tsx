@@ -135,7 +135,8 @@ export default function GeneratePage() {
         } catch {}
       }, 3000)
 
-      setTimeout(() => clearInterval(pollInterval), 300000)
+      const POLL_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
+      setTimeout(() => clearInterval(pollInterval), POLL_TIMEOUT_MS)
     } catch (e: any) {
       setError(e.response?.data?.message || 'Generation failed')
     } finally {
