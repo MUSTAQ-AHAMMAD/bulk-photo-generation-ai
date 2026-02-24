@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum GenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REJECTED
+}
+
+enum PoseType {
+  FRONT
+  BACK
+  LEFT
+  RIGHT
+  FORTY_FIVE_DEGREE
+  WALKING
+  SEATED
+  HAND_ON_HIP
+  DETAIL_CLOSE_UP
+}
+
+enum BackgroundType {
+  PURE_WHITE
+  LIGHT_GRAY
+  CUSTOM_HEX
+}
+
+enum OutputFormat {
+  WEBP
+  PNG
+  JPEG
+}
+
+enum ResolutionType {
+  RES_4000
+  RES_2500
+  RES_1500
+  RES_1000
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum EnginePreset {
+  BEST_QUALITY
+  BALANCED
+  FAST
+}
+
+model User {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  password         String
+  name             String
+  role             Role           @default(USER)
+  credits          Int            @default(10)
+  refreshToken     String?
+  stripeCustomerId String?
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  projects         Project[]
+  generations      Generation[]
+  exports          Export[]
+  billingRecords   BillingRecord[]
+  apiKeys          APIKey[]
+  creditLedger     CreditLedger[]
+}
+
+model Project {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  generations Generation[]
+  products    Product[]
+  models      AIModel[]
+  exports     Export[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model AIModel {
+  id                String       @id @default(uuid())
+  name              String
+  projectId         String?
+  project           Project?     @relation(fields: [projectId], references: [id])
+  userId            String
+  imageUrls         String[]
+  embeddingData     Json?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  generations       Generation[]
+}
+
+model Product {
+  id          String       @id @default(uuid())
+  name        String
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id])
+  imageUrl    String
+  maskUrl     String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  generations Generation[]
+}
+
+model Generation {
+  id                  String           @id @default(uuid())
+  userId              String
+  user                User             @relation(fields: [userId], references: [id])
+  projectId           String
+  project             Project          @relation(fields: [projectId], references: [id])
+  modelId             String?
+  aiModel             AIModel?         @relation(fields: [modelId], references: [id])
+  productId           String?
+  product             Product?         @relation(fields: [productId], references: [id])
+  prompt              String
+  pose                PoseType
+  background          BackgroundType
+  backgroundHex       String?
+  resolution          ResolutionType
+  outputFormat        OutputFormat
+  enginePreset        EnginePreset     @default(BALANCED)
+  strictMode          Boolean          @default(false)
+  status              GenerationStatus @default(PENDING)
+  resultImageUrl      String?
+  processedImageUrl   String?
+  similarityScore     Float?
+  ssimScore           Float?
+  rejectionReason     String?
+  retryCount          Int              @default(0)
+  jobId               String?
+  seed                Int?
+  creditsUsed         Int              @default(1)
+  metadata            Json?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model Export {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id])
+  status      ExportStatus @default(PENDING)
+  zipUrl      String?
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model BillingRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Float
+  currency    String   @default("usd")
+  credits     Int
+  stripeId    String?
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model APIKey {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  key       String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  lastUsed  DateTime?
+  createdAt DateTime @default(now())
+}
+
+model CreditLedger {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Int
+  type        String
+  description String?
+  generationId String?
+  createdAt   DateTime @default(now())
+}
+
+model AdminConfig {
+  id                     String   @id @default(uuid())
+  key                    String   @unique
+  value                  String
+  description            String?
+  updatedAt              DateTime @updatedAt
+}
