@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [savingConfig, setSavingConfig] = useState(false)
+  const [configMessage, setConfigMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [threshold, setThreshold] = useState('0.65')
   const [ssimThreshold, setSsimThreshold] = useState('0.92')
 
@@ -48,8 +49,10 @@ export default function AdminPage() {
         api.put('/admin/config', { key: 'FACE_SIMILARITY_THRESHOLD', value: threshold, description: 'Face identity lock threshold (0-1)' }),
         api.put('/admin/config', { key: 'PRODUCT_SSIM_THRESHOLD', value: ssimThreshold, description: 'Product SSIM threshold (0-1)' }),
       ])
-      alert('Config saved')
-    } catch (e) { console.error(e) }
+      setConfigMessage({ type: 'success', text: 'Configuration saved successfully.' })
+    } catch (e) {
+      console.error(e)
+      setConfigMessage({ type: 'error', text: 'Failed to save configuration.' })
     finally { setSavingConfig(false) }
   }
 
@@ -134,6 +137,11 @@ export default function AdminPage() {
             {savingConfig ? <Loader2 size={14} className="animate-spin" /> : <Settings size={14} />}
             Save Config
           </button>
+          {configMessage && (
+            <div className={`mt-3 p-3 rounded-xl text-sm border ${configMessage.type === 'success' ? 'bg-green-900/30 border-green-700 text-green-300' : 'bg-red-900/30 border-red-700 text-red-300'}`}>
+              {configMessage.text}
+            </div>
+          )}
         </div>
       </div>
     </div>

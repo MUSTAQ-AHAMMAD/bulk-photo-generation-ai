@@ -100,7 +100,7 @@ export default function GeneratePage() {
   const handleGenerate = async () => {
     if (!store.selectedPoses.length) return setError('Select at least one pose')
     if (!store.prompt.trim()) return setError('Enter a prompt')
-    if (!projectId) return setError('Enter a project ID or create a project first')
+    if (!projectId) return setError('Enter a project ID (find it in your Dashboard after creating a project)')
 
     setError('')
     store.setIsGenerating(true)

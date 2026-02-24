@@ -32,6 +32,7 @@ export default function ProjectPage() {
   const [loading, setLoading] = useState(true)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     api.get(`/projects/${id}`).then((r) => setProject(r.data)).catch(console.error).finally(() => setLoading(false))
@@ -44,11 +45,11 @@ export default function ProjectPage() {
       const completedIds = project.generations
         .filter((g) => g.status === 'COMPLETED')
         .map((g) => g.id)
-      if (!completedIds.length) { alert('No completed generations to export'); return }
+      if (!completedIds.length) { setExportMessage({ type: 'error', text: 'No completed generations to export' }); return }
       await api.post('/exports', { projectId: id, generationIds: completedIds })
-      alert('Export started! Check the exports page.')
+      setExportMessage({ type: 'success', text: 'Export started! Check your exports.' })
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Export failed')
+      setExportMessage({ type: 'error', text: e.response?.data?.message || 'Export failed' })
     } finally {
       setExporting(false)
     }
@@ -87,6 +88,12 @@ export default function ProjectPage() {
             Export ZIP
           </button>
         </div>
+
+        {exportMessage && (
+          <div className={`mb-4 p-3 rounded-xl text-sm border ${exportMessage.type === 'success' ? 'bg-green-900/30 border-green-700 text-green-300' : 'bg-red-900/30 border-red-700 text-red-300'}`}>
+            {exportMessage.text}
+          </div>
+        )}
 
         {project.generations.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
